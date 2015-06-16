@@ -1,0 +1,37 @@
+.customButton { /* style a link as a push-button */
+  display: inline-block; width: 60px;
+  height: 24px; line-height: 24px; font-size: 15px;
+  ￼21
+  font-family: sans-serif;
+  text-align: center;
+  color: black;
+  background: -webkit-linear-gradient(white,#eeeeee,#eeeeee,#e0e0e0); background: linear-gradient(white,#eeeeee,#eeeeee,#e0e0e0); text-decoration: none;
+  border: 1px solid gray; border-radius: 5px; -webkit-user-select: none; -moz-user-select: -moz-none; -ms-user-select: none; user-select: none;
+  cursor: pointer; -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+.customButton:active {
+  background: -webkit-linear-gradient(#909090,#808080,#808080,#707070);
+  background: linear-gradient(#909090,#808080,#808080,#707070);
+}
+input[type="range"] {
+  width: 140px;
+  padding: 0px;
+}
+input[type="range"]::-ms-tooltip {
+  display: none;       /* hide readout in IE */
+}
+input[type="range"]::-ms-track {
+  color: transparent;
+}
+
+.wrapper {
+position: relative;
+width: 500px;
+height: 500px;
+}
+
+.wrapper canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
