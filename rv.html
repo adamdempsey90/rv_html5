@@ -22,6 +22,7 @@
       <canvas id="trailSunCanvas" width="500" height="500"></canvas>
       <canvas id="thePlanetCanvas" width="500" height="500"></canvas>
       <canvas id="trailPlanetCanvas" width="500" height="500"></canvas>
+      <canvas id="theCMCanvas" width="500" height="500"></canvas>
     </div>
 
     <div id="chartContainer" style="height: 200px; width: 100%;">
@@ -29,39 +30,41 @@
 
     <div style="text-align:center" >
       <a class="customButton" href="javascript:void(0)"
-          onclick="fireProjectile();" ontouchstart="">Fire!</a>
-
-      &nbsp;
-
-      <a class="customButton" href="javascript:void(0)"
               onclick="clearTrails();" ontouchstart="">Clear</a>
-
       &nbsp;
       <a class="customButton" href="javascript:void(0)"
               onclick="stopIntegration();" ontouchstart="">Stop</a>
-
-      &nbsp;
-
+    </div>
+    <div style="text-align:center" >
       Eccentricity = <span id="eReadout">0</span>
       <input type="range" id="eSlider" min="0" max=".6" step=".01" value="0" oninput="initVars();" onchange="initVars();">
-
-      &nbsp;
+    </div>
+    <div style="text-align:center" >
       Semi Major Axis = <span id="aReadout">1</span> AU
       <input type="range" id="aSlider" min="-1.5" max="2" step=".01" value="0" oninput="initVars();" onchange="initVars();">
-      &nbsp;
-      Planet Mass = <span id="mReadout">-4</span> Msun
+    </div>
+    <div style="text-align:center" >
+      Planet Mass = <span id="mReadout"> 1 </span> M &oplus;
       <input type="range" id="mSlider" min="-5" max="0" step=".01" value="-4" oninput="initVars();" onchange="initVars();">
     </div>
 
 
 
-    <p>This simulation is based on Isaac Newton's famous thought experiment and illustration of firing a projectile from a high mountaintop at various speeds, as he described in <a href="http://books.google.com/books?id=DXE9AAAAcAAJ">A Treatise of the System of the World.</a></p>
+    <p>This simulation demonstrates the radial velocity method for exoplanet detection.
+        A star and a planet orbit their mutual center of mass. You can vary the
+        eccentricity and semi-major axis of the orbit, as well as the mass of the planet
+        (relative to the star).</p>
+    <p> The bottom plot shows the Star's velocity towards an observer, if the observer where viewing the system edge on.</p>
 
 
 
 
     <script>
+
       var speedSlider = document.getElementById("speedSlider");
+
+      var theCMCanvas = document.getElementById("theCMCanvas");
+      var theCMContext = theCMCanvas.getContext("2d");
 
       var theSunCanvas = document.getElementById("theSunCanvas");
       var theSunContext = theSunCanvas.getContext("2d");
@@ -81,8 +84,10 @@
       var eSlider = document.getElementById('eSlider');
       var aSlider = document.getElementById('aSlider');
       var mSlider = document.getElementById('mSlider');
+
       var NewtG  = 4*Math.PI*Math.PI;
       var VtoKms = 4.74057172;
+      var SuntoEarth = 332948.6
       var Moving = true;
 
       var timer;
@@ -98,15 +103,17 @@
       var totaltime = 0;
 
       // Plotting
-      var dps = []; // dataPoints
-
+      var dpsS = []; // dataPoints
+      var dpsP = [];
       var chart;
 
-      var chartx = 0;
-      var charty = 0;
-      //		var updateInterval = 20;
-      var dataLength = 600; // number of dataPoints visible at any point
+      var chartxP = 0;
+      var chartyP = 0;
+      var chartxS = 0;
+      var chartyS = 0;
 
+      var dataLength = 600; // number of dataPoints visible at any point
+      var PointsPerOrbit = 200;
       var count=0;
       var timeResolution;  // Data will be taken every timeResolution years
 
