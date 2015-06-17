@@ -26,12 +26,15 @@ input[type="range"]::-ms-track {
 
 .wrapper {
 position: relative;
-width: 100%;
+width: 500px;
 height: 500px;
+order-style: solid;
 }
 
 .wrapper canvas {
     position: absolute;
     top: 0;
     left: 0;
+    border-style: solid;
+
 }

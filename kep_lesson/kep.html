@@ -5,6 +5,7 @@
   <link rel="stylesheet" type="text/css" href="kep.css">
   <script src="kep.min.js"></script>
   <script src="canvasjs.min.js"></script>
+  <script src="fabric.min.js"></script>
 </head>
 
 <body style="font-family:sans-serif;
@@ -18,17 +19,18 @@
 
 
     <div class="wrapper">
-      <canvas id="theSunCanvas" width="500" height="500"></canvas>
-      <canvas id="trailSunCanvas" width="500" height="500"></canvas>
-      <canvas id="thePlanetCanvas" width="500" height="500"></canvas>
-      <canvas id="trailPlanetCanvas" width="500" height="500"></canvas>
-      <canvas id="theCMCanvas" width="500" height="500"></canvas>
+      <canvas id="trailCanvas" width="500px" height="500px"></canvas>
+      <canvas id="theCanvas" width="500px" height="500px"></canvas>
+      <canvas id="drawCanvas" width="500px" height="500px"></canvas>
     </div>
 
     <div id="chartContainer" style="height: 200px; width: 100%;">
     </div>
 
     <div style="text-align:center" >
+      <a class="customButton" href="javascript:void(0)"
+              onclick="startIntegration();" ontouchstart="">Start</a>
+      &nbsp;
       <a class="customButton" href="javascript:void(0)"
               onclick="clearTrails();" ontouchstart="">Clear</a>
       &nbsp;
@@ -37,15 +39,15 @@
     </div>
     <div style="text-align:center" >
       Eccentricity = <span id="eReadout">0</span>
-      <input type="range" id="eSlider" min="0" max=".6" step=".01" value="0" oninput="initVars();" onchange="initVars();">
+      <input type="range" id="eSlider" min="0" max=".6" step=".01" value="0" oninput="sliderChange();" onchange="sliderChange();">
     </div>
     <div style="text-align:center" >
       Semi Major Axis = <span id="aReadout">1</span> AU
-      <input type="range" id="aSlider" min="-1.5" max="2" step=".01" value="0" oninput="initVars();" onchange="initVars();">
+      <input type="range" id="aSlider" min="-1.5" max="2" step=".01" value="0" oninput="sliderChange();" onchange="sliderChange();">
     </div>
     <div style="text-align:center" >
       Planet Mass = <span id="mReadout"> 1 </span> M &oplus;
-      <input type="range" id="mSlider" min="-5" max="0" step=".01" value="-4" oninput="initVars();" onchange="initVars();">
+      <input type="range" id="mSlider" min="-5" max="0" step=".01" value="-4" oninput="sliderChange();" onchange="sliderChange();">
     </div>
 
 
@@ -61,38 +63,52 @@
 
     <script>
 
-      var speedSlider = document.getElementById("speedSlider");
+      var theCanvas = document.getElementById("theCanvas");
+      var theContext = theCanvas.getContext("2d");
+      var trailCanvas = document.getElementById("trailCanvas");
+      var trailContext = trailCanvas.getContext("2d");
 
-      var theCMCanvas = document.getElementById("theCMCanvas");
-      var theCMContext = theCMCanvas.getContext("2d");
+  //    theCanvas.addEventListener('click', drawLine, false);
 
-      var theSunCanvas = document.getElementById("theSunCanvas");
-      var theSunContext = theSunCanvas.getContext("2d");
+      var canvas = new fabric.Canvas('drawCanvas', { selection: false });
 
-      var trailSunCanvas = document.getElementById("trailSunCanvas");
-      var trailSunContext = trailSunCanvas.getContext("2d");
+      var line, isDown;
+
+      canvas.on('mouse:down', function(o){
+        isDown = true;
+        var pointer = canvas.getPointer(o.e);
+        var points = [ pointer.x, pointer.y, pointer.x, pointer.y ];
+        line = new fabric.Line(points, {
+          strokeWidth: 5,
+          fill: 'red',
+          stroke: 'red',
+          originX: 'center',
+          originY: 'center'
+        });
+        canvas.add(line);
+      });
+
+      canvas.on('mouse:move', function(o){
+        if (!isDown) return;
+        var pointer = canvas.getPointer(o.e);
+        line.set({ x2: pointer.x, y2: pointer.y });
+        canvas.renderAll();
+      });
+
+      canvas.on('mouse:up', function(o){
+        isDown = false;
+      });
 
 
-
-
-
-      var thePlanetCanvas = document.getElementById('thePlanetCanvas') //.addEventListener('click', drawLine, false);
-      var thePlanetContext = thePlanetCanvas.getContext("2d");
-
-      var trailPlanetCanvas = document.getElementById("trailPlanetCanvas");
-      var trailPlanetContext = trailPlanetCanvas.getContext("2d");
-
-      var speedReadout = document.getElementById("speedReadout");
-
-
-
+      var eslider = document.getElementById('eslider');
       var aSlider = document.getElementById('aSlider');
       var mSlider = document.getElementById('mSlider');
 
       var NewtG  = 4*Math.PI*Math.PI;
       var VtoKms = 4.74057172;
       var SuntoEarth = 332948.6
-      var Moving = true;
+      var Moving = false;
+      var AuPerPixel = 2/theCanvas.width;
 
       var timer;
       var clicks = 0;
@@ -101,7 +117,7 @@
 
       var ecc,semia, PlanetMass;
 
-      var ReducedMass,mtot,sfac, AuPerPixel;
+      var ReducedMass,mtot,sfac;
       var SunX, SunY, PlanetX, PlanetY;
       var SunVx, SunVy, PlanetVx, PlanetVy, SunVr;
 
@@ -109,14 +125,12 @@
       var totaltime = 0;
 
       // Plotting
-      var dpsS = []; // dataPoints
-      var dpsP = [];
+      var dps = []; // dataPoints
+
       var chart;
 
-      var chartxP = 0;
-      var chartyP = 0;
-      var chartxS = 0;
-      var chartyS = 0;
+      var chartx;
+      var charty;
 
       var dataLength = 600; // number of dataPoints visible at any point
       var PointsPerOrbit = 200;
@@ -124,7 +138,8 @@
       var timeResolution;  // Data will be taken every timeResolution years
 
 
-      initVars();
+      window.onload = init();
+    //  initVars();
 
 
     </script>
